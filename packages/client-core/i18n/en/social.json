@@ -1,0 +1,210 @@
+{
+  "addComment": "添加评价...",
+  "share": "分享",
+  "suggestions": " 给您的建议",
+  "seeAll": "查看所有内容",
+  "likes": "种类",
+  "viewComments": "查看所有重要评价",
+  "more": "更多",
+  "username": "用户姓名",
+  "fullName": "名字姓氏",
+  "reportInApporpriate": "报告不恰当",
+  "unfollow": "取消对...的关注",
+  "goToPost": "去发布",
+  "shareModal": "分享",
+  "copyLink": "复制链接",
+  "embed": "嵌入",
+  "cancel": "取消",
+  "confirm": "确定",
+  "save": "保存",
+  "profilePic": "用户的个人用户资料图片",
+  "ara": "现在",
+  "follow": "跟随",
+  "flames": "火焰",
+  "continue": "继续",
+  "partyInvitationSent": "已发送派对宴请",
+  "selfLeftParty": "您已经离开派对",
+  "otherLeftParty": "已经离开派对",
+  "selfJoinedParty": "您已经加入派对",
+  "otherJoinedParty": "已经加入派对",
+  "arMedia": {
+    "back": "返回",
+    "clip": "缩短",
+    "backgrounds": "背景",
+    "start": "开始"
+  },
+  "arMediaform": {
+    "title": "头衔",
+    "type": "种类",
+    "clip": "缩短",
+    "background": "背景",
+    "scene": "现场",
+    "save": "保存",
+    "manifest-file": "清单 .清单文件",
+    "audio-file": "Mp4文件",
+    "dracosis-file": "Dracosis .uvol 文件",
+    " 预览文件": "预览图像文件"
+  },
+  "创造者": {
+    "myVideos": "我的视频",
+    "savedVideos": "已保存视频",
+    "back": "返回",
+    "blocked-list": "以锁定的清单",
+    "block-user": "阻止用户",
+    "dialog-content": "您将不会看到该用户的文件和内容"
+  },
+  "creatorForm": {
+    "back": "返回",
+    "edit": "编辑文件",
+    "save": "保存",
+    "changeAvatar": "改变分身图像",
+    "ph-selectPreview": "选择文件",
+    "ph-name": "您的名字",
+    "ph-username": "您的用户名",
+    "ph-email": "您的邮箱",
+    "ph-tags": "标签",
+    "ph-link": "链接",
+    "ph-aboutYou": "关于您的更多信息",
+    "ph-twitter": "推特",
+    "ph-instagram": "照片墙（一种分享照片的应用程序）",
+    "ph-tiktok": "抖音",
+    "sign-out": "签字登记离开"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "dashboard": "仪表板",
+    "users": "用户",
+    "feeds": "信息输入",
+    "arMedia": "视频媒体",
+    "editor": "编辑",
+    "creator": "创作者"
+  },
+  "featured": {
+    "empty-list": "目前没有提要信息 ..."
+  },
+  "feed": {
+    "back": "返回",
+    "related": "相关提要信息",
+    "is-repoted-message": "报道相关提要信息!"
+  },
+  "feedForm": {
+    "back": "返回",
+    "thanks": "感谢您的分享和优化我们的社区",
+    "share": "在社区分享一些东西",
+    "upload": "上传视频",
+    "ph-selectVideo": "选择视频",
+    "preview": "预览图像",
+    "ph-selectPreview": "选择预览",
+    "createFeed": "为了创建一个提要信息，你必须有一个视频和预览图像!!!",
+    "ph-videoName": "视频名称",
+    "ph-type": "输入你想在社区分享的内容 ... ",
+    "lbl-share": "分享",
+    "save": "保存并且进行下一步"
+  },
+  "feedMenu": {
+    "featured": "有特点的",
+    "creators": "创作者们",
+    "feed": "这个提要信息"
+  },
+  "header": {
+    "lbl-volumetric": "容积"
+  },
+  "login": {
+    "account": "您注册账户了吗?",
+    "login": "注册",
+    "resetPassword": "点击按钮重设密码 (在这个过程中您会收到相关邮件)",
+    "notHavingAccount": "您没有账户吗?",
+    "signUp": "注册",
+    "forgotPassword": "忘记密码?",
+    "back": "返回",
+    "or": "或者"
+  },
+  "comment": {
+    "add": "添加您的评价..."
+  },
+  "notification": {
+    "feedFire": "撤销您的提要信息",
+    "feedBookmarked": "记录下您的提要信息",
+    "comment": "评价您的提要信息:",
+    "commentFire": "撤销您对提要的评价",
+    "follow": "开始跟踪您的信息",
+    "unfollow": "停止跟踪您的信息",
+    "followed": " followed you",
+    "activity": "活动"
+  },
+  "onBoarding": {
+    "welcome": "欢迎!",
+    "description": "最大的集合有370个＋IOS原型布局.",
+    "next": "下一步",
+    "discover": " 发现文章,",
+    "news": "新闻和帖子",
+    "lines": "正是这些感觉驱使了我们对天文学的热爱和欲望.",
+    "getStarted": " 准备开始",
+    "meetUp": "偶遇",
+    "friends": "朋友.",
+    "meet": "偶遇朋友们"
+  },
+  "shareForm": {
+    "arcMedia": "分享",
+    "videoCreated": "我创作这个视频",
+    "shareWithBuddies": "和朋友们分享",
+    "shareVideo": "分享视频",
+    "save": "保存到相机相册里",
+    "cancel": "取消",
+    "close": "关闭",
+    "addFeed": "添加提要"
+  },
+  "simpleModal": {
+    "emptyList": "空白名单",
+    "followers": "接下来的",
+    "following": " 追随者",
+    "flames": " 火焰"
+  },
+  "splash": {
+    "screen": "装饰屏幕",
+    "logo": "徽标"
+  },
+  "story": {
+    "profilePic": "用户的配置文件和图片"
+  },
+  "view": {
+    "cancel": "取消",
+    "choice": "你有两种不同的录音模式可以选择",
+    "verticalMode": "垂直模式记录时间是30秒",
+    "horizontalMode": " 水平模式记录时间是无限制的",
+    "start": "开始",
+    "not-show": "不要再次显示它",
+    "welcome": " 欢迎来到ARC!  您可以用我们的全息图制作个人视频，并且发布到您的社交媒体频道上!",
+    "step": "步骤{{步骤}}",
+    "text-step-1": " 从图库中选择一个全息图.",
+    "text-step-2": "这是AR技术, 如果您想要知道全息图的性能，您可以用您的相机左右扫描空间3-5秒.",
+    "text-step-3-part-1": "在您想要固定全息图的位置上点击以此屏幕.",
+    "text-step-3-part-2": "提示!  点击其他地方一次，将全息图移动到另外一个位置.",
+    "text-step-3-part-3": "提示!  您用拇指和食指点击货扩大屏幕来调整全息图的大小.",
+    "text-step-4-part-1": "双击红色录制按钮，开始录制视频.",
+    "text-step-4-part-2": " 双击红色按钮停止录制."
+  },
+  "video": {
+    "back": "返回"
+  },
+  "terms": {
+    "confirmTerms": "我同意使用服务条款",
+    "confirmPolicy": " 我同意使用隐私政策"
+  },
+  "registration": {
+    "ph-phoneEmail": "使用手机号码或者邮件",
+    "facebook": "继续使用脸书",
+    "google": "机组使用谷歌",
+    "linkedin": "继续使用Linkedin账户",
+    "twitter": "继续使用推特",
+    "gitHub": "继续使用GitHub",
+    "connect": "绑定您的电子邮件或者电话号码",
+    "logIn": "登录",
+    "LogInTo": "登录到",
+    "continueAsGuest": "以游客身份进入"
+  },
+  "invite": {
+    "accept": "接受",
+    "decline": "拒绝"
+  }
+}
