@@ -14,10 +14,10 @@ import { createXRUI } from '@xrengine/engine/src/xrui/functions/createXRUI'
 import { useXRUIState } from '@xrengine/engine/src/xrui/functions/useXRUIState'
 import { dispatchAction } from '@xrengine/hyperflux'
 import { ProductComponent, ProductComponentType } from '../ProductComponent'
-import { CartService, useCartState } from '../ShopifyCartService'
 import { ModelComponent } from '@xrengine/engine/src/scene/components/ModelComponent'
 import { useActiveMenu } from '@xrengine/client-core/src/user/components/UserMenu'
 import { Views } from '@xrengine/client-core/src/user/components/UserMenu/util'
+import { NotificationService } from "@xrengine/client-core/src/common/services/NotificationService";
 
 export interface ProductModalViewState {
   mode: 'inactive' | 'active' | 'interacting'
@@ -60,8 +60,6 @@ export const EcommerceInteractableModalView = () => {
 
   const interactableModelUrl = getComponent(modalState.productEntity.value, ModelComponent)?.src
   const shareLink = `https://${new URL(window.location as any).host}/ecommerce/item/${window.btoa(interactableModelUrl.value)}`
-  const cartState = useCartState()
-  const addingToCart = cartState.addingToCart.value === productComponent.variantId
 
   const onOpenShare = (event) => {
     event.preventDefault()
@@ -72,12 +70,9 @@ export const EcommerceInteractableModalView = () => {
   const onVote = (event) => {
     event.preventDefault()
     event.stopPropagation()
-    alert(`给作品ID${productComponent.productId}投票`)
-  }
-
-
-  const onAddToCart = () => {
-    if (!addingToCart) CartService.addItemToCart(productComponent.variantId)
+    console.log(1231)
+    // todo 在这里 判断剩余投票次数&发送投票请求 没有次数 提示&return
+    NotificationService.dispatchNotify('投票成功！', { variant: 'success' })
   }
 
   return (
@@ -94,14 +89,14 @@ export const EcommerceInteractableModalView = () => {
           </div>
 
           <div
-              className="description"
-              xr-layer="true"
-              xr-pixel-ratio="0.75"
+            className="description"
+            xr-layer="true"
+            xr-pixel-ratio="0.75"
           >
             {
               productComponent.type === 'paper' ?
                 <img className="descriptionImg" src={productComponent.mediaUrl} alt=""/>:
-                <video className="descriptionImg" autoPlay={true} src={productComponent.mediaUrl}  alt=""/>
+                <video className="descriptionImg" autoPlay={true} src={productComponent.mediaUrl} />
             }
           </div>
           <div className="buttons">

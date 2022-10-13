@@ -23,8 +23,10 @@ import { TransformComponent } from '@xrengine/engine/src/transform/components/Tr
 import { ObjectFitFunctions } from '@xrengine/engine/src/xrui/functions/ObjectFitFunctions'
 
 import { createProductModalView } from './EcommerceInteractableModalView'
-import { entityExists } from '@xrengine/engine/src/ecs/functions/EntityFunctions'
+import {createEntity, entityExists} from '@xrengine/engine/src/ecs/functions/EntityFunctions'
 import { EngineRenderer } from '@xrengine/engine/src/renderer/WebGLRendererSystem'
+import {NotificationService} from "@xrengine/client-core/src/common/services/NotificationService";
+import {ModelComponent} from "@xrengine/engine/src/scene/components/ModelComponent";
 
 const MODEL_SCALE_INACTIVE = 1
 const MODEL_SCALE_ACTIVE = 1.2
@@ -205,8 +207,6 @@ export const updateInteractUI = (
     //   mat.opacity = MathUtils.lerp(mat.opacity, 0, alpha)
     // }
   } else if (nextMode === 'active') {
-
-
     if (modelTargetGroup.parent !== world.scene) {
       world.scene.attach(modelTargetGroup)
     }
@@ -245,12 +245,6 @@ export const updateInteractUI = (
     linkMat.opacity = MathUtils.lerp(linkMat.opacity, 0, alpha)
     // linkCartMat.opacity = MathUtils.lerp(linkCartMat.opacity, 0, alpha)
 
-    // for (const [i, s] of stars.entries()) {
-    //   s.position.lerp(s.domLayout.position, alpha)
-    //   s.scale.lerp(s.domLayout.scale.multiplyScalar(0.1), alpha)
-    //   const mat = s.contentMesh.material as MeshBasicMaterial
-    //   mat.opacity = MathUtils.lerp(mat.opacity, 0, alpha)
-    // }
   } else if (nextMode === 'interacting') {
     const uiSize = uiContainer.rootLayer.domSize
 
@@ -263,60 +257,68 @@ export const updateInteractUI = (
     uiContainer.position.lerp(INTERACTING_UI_POSITION, alpha)
     uiContainer.quaternion.slerp(INTERACTING_CAMERA_ROTATION, alpha)
     uiContainer.scale.lerp(_vect.setScalar(uiContainerScale), alpha)
+    // 如果是card类型 旋转
+    console.log(xrui.state.productData.type.value)
+    if(xrui.state.productData.type.value === 'card'){
 
-    // const modelBounds = getComponent(productEntity, BoundingBoxComponent)
-    // const modelSize = modelBounds.box.getSize(_vect)
-    // const modelScale =
-    //   ObjectFitFunctions.computeContentFitScale(
-    //     modelSize.x,
-    //     modelSize.y,
-    //     modelDivLayer.domSize.x,
-    //     modelDivLayer.domSize.y,
-    //     'contain'
-    //   ) * 0.5
-    //
-    // if (modelTargetGroup.parent !== modelDivLayer) {
-    //   modelDivLayer.attach(modelTargetGroup)
-    // }
+      const modal = getComponent(productEntity, ModelComponent)
+      console.log(modal)
 
-    // modelTargetGroup.position.lerp(_vect.setScalar(0), alpha)
-    // modelTargetGroup.quaternion.slerp(_quat.copy(world.camera.quaternion).invert(), alpha)
-    // modelTargetGroup.scale.lerp(_vect.setScalar(modelScale), alpha)
+      // todo 判断抽奖次数 如果没有次数 NotificationService.dispatchNotify 一个提示 然后 return
+      // 如果当前旋转状态false 设置结束时间 并且开始旋转
+      if(!xrui.state.productData.rotateStatus.value){
+        // 设置为3秒后 旋转三秒停止
+        xrui.state.productData.endTime.set(world.elapsedSeconds + 3)
+        xrui.state.productData.rotateStatus.set(true)
+        // todo 这里弄一个最顶层的遮罩层 防止用户点击屏幕中断抽奖旋转
+        NotificationService.dispatchNotify('正在抽奖中，请勿离开～', { variant: 'info' })
+      }
+      // 世界时间小于设置的停止时间 旋转
+      if(xrui.state.productData.endTime.value > world.elapsedSeconds){
+        modelTargetGroup.rotation.set(0, 5 * world.elapsedSeconds, 0)
+      } else {
+        // 旋转结束 结束时间设置为0
+        xrui.state.productData.endTime.set(0)
+        xrui.state.productData.rotateStatus.set(false)
+        // 模型状态设置为 active 防止再次旋转
+        xrui.state.mode.set('inactive')
+        NotificationService.dispatchNotify('恭喜你获得熬夜写代码特等奖！', { variant: 'success' })
+        // todo Insert Model
+        const entity = createEntity()
+        addComponent(entity, ModelComponent, {
+          name: 'name',
+          src: 'https://xr.yee.link/projects/default-project/assets/cube.glb'
+        } as any)
+        console.log('loaded')
+      }
+      titleMat.opacity = MathUtils.lerp(titleMat.opacity, 0, alpha)
 
-    rootMat.opacity = MathUtils.lerp(rootMat.opacity, 1, alpha)
+      // descriptionMat.opacity = MathUtils.lerp(descriptionMat.opacity, 0, descriptionAlpha)
+      // linkMat.opacity = MathUtils.lerp(linkMat.opacity, 0, linkAlpha)
+    } else {
+      rootMat.opacity = MathUtils.lerp(rootMat.opacity, 1, alpha)
+      const mpp = 1 / xrui.container.manager.pixelsPerMeter
+      title.position.lerp(title.domLayout.position, alpha)
+      title.scale.lerp(_vect.copy(title.domLayout.scale).multiplyScalar(0.99), alpha)
+      // title.scale.lerp(interactHint.domLayout.position, alpha)dwa
+      titleMat.opacity = MathUtils.lerp(titleMat.opacity, 1, alpha)
+      interactHint.position.lerp(interactHint.domLayout.position, alpha)
+      interactHintMat.opacity = MathUtils.lerp(interactHintMat.opacity, 0, alpha)
 
-    const mpp = 1 / xrui.container.manager.pixelsPerMeter
-    title.position.lerp(title.domLayout.position, alpha)
-    title.scale.lerp(_vect.copy(title.domLayout.scale).multiplyScalar(0.99), alpha)
-    // title.scale.lerp(interactHint.domLayout.position, alpha)
-    titleMat.opacity = MathUtils.lerp(titleMat.opacity, 1, alpha)
-    interactHint.position.lerp(interactHint.domLayout.position, alpha)
-    interactHintMat.opacity = MathUtils.lerp(interactHintMat.opacity, 0, alpha)
+      const descriptionAlpha = Math.min((transitionElapsed - 0.2) / (duration * 3), 1)
+      description.position.lerp(description.domLayout.position, descriptionAlpha)
+      descriptionMat.opacity = MathUtils.lerp(descriptionMat.opacity, 1, descriptionAlpha)
 
-    const descriptionAlpha = Math.min((transitionElapsed - 0.2) / (duration * 3), 1)
-    description.position.lerp(description.domLayout.position, descriptionAlpha)
-    descriptionMat.opacity = MathUtils.lerp(descriptionMat.opacity, 1, descriptionAlpha)
+      // const priceAlpha = Math.min((transitionElapsed - 0.3) / (duration * 3), 1)
+      // price.position.lerp(price.domLayout.position, priceAlpha)
+      // priceMat.opacity = MathUtils.lerp(priceMat.opacity, 1, priceAlpha)
 
-    // const priceAlpha = Math.min((transitionElapsed - 0.3) / (duration * 3), 1)
-    // price.position.lerp(price.domLayout.position, priceAlpha)
-    // priceMat.opacity = MathUtils.lerp(priceMat.opacity, 1, priceAlpha)
-
-    const linkAlpha = Math.min((transitionElapsed - 0.3) / (duration * 3), 1)
-    const linkAlpha2 = Math.min((transitionElapsed - 0.4) / (duration * 3), 1)
-    link.position.lerp(link.domLayout.position, linkAlpha)
-    link.scale.lerp(link.domLayout.scale, linkAlpha)
-    linkMat.opacity = MathUtils.lerp(linkMat.opacity, 1, linkAlpha)
-    // linkCart.position.lerp(linkCart.domLayout.position, linkAlpha2)
-    // linkCart.scale.lerp(linkCart.domLayout.scale, linkAlpha2)
-    // linkCartMat.opacity = MathUtils.lerp(linkCartMat.opacity, 1, linkAlpha2)
-    //
-    // for (const [i, s] of stars.entries()) {
-    //   const alpha = Math.min((transitionElapsed - i * 0.1) / (duration * 3), 1)
-    //   s.position.lerp(s.domLayout.position, alpha)
-    //   s.scale.lerp(s.domLayout.scale, alpha)
-    //   const mat = s.contentMesh.material as MeshBasicMaterial
-    //   mat.opacity = MathUtils.lerp(mat.opacity, 1, alpha)
-    // }
+      const linkAlpha = Math.min((transitionElapsed - 0.3) / (duration * 3), 1)
+      const linkAlpha2 = Math.min((transitionElapsed - 0.4) / (duration * 3), 1)
+      link.position.lerp(link.domLayout.position, linkAlpha)
+      link.scale.lerp(link.domLayout.scale, linkAlpha)
+      linkMat.opacity = MathUtils.lerp(linkMat.opacity, 1, linkAlpha)
+    }
   }
 
   const productTransform = getComponent(productEntity, TransformComponent)
