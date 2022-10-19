@@ -1,23 +1,23 @@
-import { createState } from '@hookstate/core'
+import {createState} from '@hookstate/core'
 import React from 'react'
-import { Group } from 'three'
+import {Group} from 'three'
 
-import { isMobile } from '@xrengine/engine/src/common/functions/isMobile'
-import { EngineActions } from '@xrengine/engine/src/ecs/classes/EngineState'
-import { Entity } from '@xrengine/engine/src/ecs/classes/Entity'
-import { getComponent } from '@xrengine/engine/src/ecs/functions/ComponentFunctions'
+import {isMobile} from '@xrengine/engine/src/common/functions/isMobile'
+import {EngineActions} from '@xrengine/engine/src/ecs/classes/EngineState'
+import {Entity} from '@xrengine/engine/src/ecs/classes/Entity'
+import {getComponent} from '@xrengine/engine/src/ecs/functions/ComponentFunctions'
 import {
   TransformComponent,
   TransformComponentType
 } from '@xrengine/engine/src/transform/components/TransformComponent'
-import { createXRUI } from '@xrengine/engine/src/xrui/functions/createXRUI'
-import { useXRUIState } from '@xrengine/engine/src/xrui/functions/useXRUIState'
-import { dispatchAction } from '@xrengine/hyperflux'
-import { ProductComponent, ProductComponentType } from '../ProductComponent'
-import { ModelComponent } from '@xrengine/engine/src/scene/components/ModelComponent'
-import { useActiveMenu } from '@xrengine/client-core/src/user/components/UserMenu'
-import { Views } from '@xrengine/client-core/src/user/components/UserMenu/util'
-import { NotificationService } from "@xrengine/client-core/src/common/services/NotificationService";
+import {createXRUI} from '@xrengine/engine/src/xrui/functions/createXRUI'
+import {useXRUIState} from '@xrengine/engine/src/xrui/functions/useXRUIState'
+import {dispatchAction} from '@xrengine/hyperflux'
+import {ProductComponent, ProductComponentType} from '../ProductComponent'
+import {ModelComponent} from '@xrengine/engine/src/scene/components/ModelComponent'
+import {useActiveMenu} from '@xrengine/client-core/src/user/components/UserMenu'
+import {Views} from '@xrengine/client-core/src/user/components/UserMenu/util'
+import {NotificationService} from "@xrengine/client-core/src/common/services/NotificationService";
 
 export interface ProductModalViewState {
   mode: 'inactive' | 'active' | 'interacting'
@@ -65,14 +65,14 @@ export const EcommerceInteractableModalView = () => {
     event.preventDefault()
     event.stopPropagation()
     if (isMobile) window.open(shareLink)
-    else setCurrentActiveMenu({ view: Views.Share })
+    else setCurrentActiveMenu({view: Views.Share})
   }
   const onVote = (event) => {
     event.preventDefault()
     event.stopPropagation()
     console.log(1231)
     // todo 在这里 判断剩余投票次数&发送投票请求 没有次数 提示&return
-    NotificationService.dispatchNotify('投票成功！', { variant: 'success' })
+    NotificationService.dispatchNotify('投票成功！', {variant: 'success'})
   }
 
   return (
@@ -97,8 +97,8 @@ export const EcommerceInteractableModalView = () => {
           >
             {
               productComponent.type === 'paper' ?
-                <img className="descriptionImg" src={productComponent.mediaUrl} alt=""/>:
-                <video className="descriptionImg" autoPlay={true} src={productComponent.mediaUrl} />
+                <img className="descriptionImg" src={productComponent.mediaUrl} alt=""/> :
+                <video id="productVideo" className="descriptionImg" autoPlay={false} controls={true} src={productComponent.mediaUrl}/>
             }
           </div>
           <div className="buttons">

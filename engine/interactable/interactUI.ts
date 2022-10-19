@@ -53,9 +53,9 @@ import {MediaComponent} from "@xrengine/engine/src/scene/components/MediaCompone
 import obj3dFromUuid from "@xrengine/engine/src/scene/util/obj3dFromUuid";
 import {PortalComponent} from "@xrengine/engine/src/scene/components/PortalComponent";
 import {setVisibleComponent} from "@xrengine/engine/src/scene/components/VisibleComponent";
-import { ProductComponent } from '../ProductComponent'
-import { changeAvatarAnimationState } from '@xrengine/engine/src/avatar/animation/AvatarAnimationGraph'
-import { AvatarStates } from '@xrengine/engine/src/avatar/animation/Util'
+import {ProductComponent} from '../ProductComponent'
+import {changeAvatarAnimationState} from '@xrengine/engine/src/avatar/animation/AvatarAnimationGraph'
+import {AvatarStates} from '@xrengine/engine/src/avatar/animation/Util'
 
 const MODEL_SCALE_INACTIVE = 1
 const MODEL_SCALE_ACTIVE = 1.2
@@ -80,6 +80,7 @@ const _vect = new Vector3()
 const _quat = new Quaternion()
 let congbaPlayer = null
 let _uiCount = 0
+var resultImg = ''
 
 export function createProductInteractUI(modelEntity: Entity) {
   _uiCount++
@@ -202,11 +203,18 @@ export const updateInteractUI = (
   const cameraTransform = getComponent(Engine.instance.currentWorld.cameraEntity, TransformComponent)
 
   if (nextMode === 'inactive') {
+    console.log('我调用了')
     // 隐藏控制按钮
     const ctlBox = document.getElementById('ctrlBox')
     const userMenuBox = document.getElementById('userMenuBox')
     ctlBox.style.display = 'block'
     userMenuBox.style.display = 'block'
+    if (xrui.state.productData.type.value === 'video') {
+      // 如果是视频 暂停
+      const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
+      const video = shadowRoot.getElementById('productVideo')
+      video && video.stop()
+    }
     // if(congbaPlayer && !xrui.state.productData.congbaStatus.value){
     //   console.log('congbaPlayer.pause()')
     //   congbaPlayer.pause()
@@ -244,6 +252,12 @@ export const updateInteractUI = (
     const userMenuBox = document.getElementById('userMenuBox')
     ctlBox.style.display = 'block'
     userMenuBox.style.display = 'block'
+    if (xrui.state.productData.type.value === 'video') {
+      // 如果是视频 暂停
+      const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
+      const video = shadowRoot.getElementById('productVideo')
+      video && video.stop()
+    }
     // 卡片类型不要全系框
     // if (xrui.state.productData.type.value === 'card') return;
     if (modelTargetGroup.parent !== world.scene) {
@@ -283,8 +297,8 @@ export const updateInteractUI = (
 
   } else if (nextMode === 'interacting') {
     // 动作 先随便用一个代替
-    const entity = Engine.instance.currentWorld.localClientEntity
-    changeAvatarAnimationState(entity, AvatarStates.DANCE1)
+    // const entity = Engine.instance.currentWorld.localClientEntity
+    // changeAvatarAnimationState(entity, AvatarStates.DANCE1)
     if (xrui.state.productData.type.value === 'congba') {
       // 如果是聪吧类型 全系框不消失 按顺序插入文本且播放mp3
       const mediaArr = xrui.state.productData.congbaArr.value
@@ -322,76 +336,92 @@ export const updateInteractUI = (
       uiContainer.scale.lerp(_vect.setScalar(uiContainerScale), alpha)
       // 如果是card类型 旋转
       if (xrui.state.productData.type.value === 'card') {
-            const modal = getComponent(productEntity, ModelComponent)
-            // todo1 判断抽奖次数 如果没有次数 NotificationService.dispatchNotify 一个提示 然后 return
-            // 如果当前旋转状态false 设置结束时间 并且开始旋转
-            if (!xrui.state.productData.rotateStatus.value) {
-              // 设置为3秒后 旋转三秒停止
-              xrui.state.productData.endTime.set(world.elapsedSeconds + LUCKY_ROTATE_DURATION)
-              xrui.state.productData.rotateStatus.set(true)
-              // todo 这里弄一个最顶层的遮罩层 防止用户点击屏幕中断抽奖旋转和重复抽奖
-              const mask = document.getElementsByClassName('luckDrawMask')[0]
-              mask.style.display = 'block'
-              NotificationService.dispatchNotify('正在抽奖中，请勿离开～', {variant: 'info'})
-              // todo2 这里调用接口将返回的奖品id放到轮盘的 resultId字段 奖品会自动出现在轮盘上方
-              Axios({
-                url: 'https://xr.yee.link/bgy-api/roll/get/1',
-                method: 'get',
-             }).then(res => {
-                if (res.data.code == 200) {
-                    console.log('++++++',res.data)
-                    const nums = 1
-                    if(nums >0){
-                      // 假设这里拿到的 id 和 name分别为：
-              const resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
-              const resultName = '熬夜写代码特等奖'
+        const modal = getComponent(productEntity, ModelComponent)
+        // todo1 判断抽奖次数 如果没有次数 NotificationService.dispatchNotify 一个提示 然后 return
+        // 如果当前旋转状态false 设置结束时间 并且开始旋转
+        if (!xrui.state.productData.rotateStatus.value) {
+          // 设置为3秒后 旋转三秒停止
+          xrui.state.productData.endTime.set(world.elapsedSeconds + LUCKY_ROTATE_DURATION)
+          xrui.state.productData.rotateStatus.set(true)
+          // todo 这里弄一个最顶层的遮罩层 防止用户点击屏幕中断抽奖旋转和重复抽奖
+          const mask = document.getElementsByClassName('luckDrawMask')[0]
+          mask.style.display = 'block'
+          NotificationService.dispatchNotify('正在抽奖中，请勿离开～', {variant: 'info'})
+          // todo2 这里调用接口将返回的奖品id放到轮盘的 resultId字段 奖品会自动出现在轮盘上方
+          const userID = localStorage.getItem('API_LOGIN_ID')
+          Axios({
+            url: 'https://xr.yee.link/bgy-api/prize/get',
+            method: 'post',
+            data: `user_id=${userID}`,
+          }).then(res => {
+            if (res.data.code == 200) {
+              console.log('++++++', res.data)
+
+              // 假设这里拿到的 id 和 name分别为：
+              var resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
+              const resultName = `${res.data.prize_name}`
+              resultImg = res.data.prize_icon
+              // const resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
+              // const resultName = '熬夜写代码特等奖'
               // 记录抽奖结果
               xrui.state.productData.resultId.set(resultId)
               xrui.state.productData.resultName.set(resultName)
+              // xrui.state.productData.resultImg.set(imgs)
+              console.log('查看', xrui.state.productData.resultName.value)
               const prizeObj = obj3dFromUuid(resultId) as Group
               console.log(prizeObj)
               // 设置奖品出现的时间和消失时间 出现时间设置为轮盘旋转结束时间
-                      prizeObj.userData.showTime = xrui.state.productData.endTime.value
-                      prizeObj.userData.endTime = xrui.state.productData.endTime.value + PRIZE_SHOW_DURATION
-                      console.log(prizeObj.userData.showTime)
-                    }else{
-                      NotificationService.dispatchNotify('没有抽奖次数了', {variant: 'info'})
-                      xrui.state.productData.endTime.set(0)
-                      xrui.state.productData.rotateStatus.set(false)
-                      // 模型状态设置为 inactive 防止再次旋转
-                      xrui.state.mode.set('inactive')
-                      const mask = document.getElementsByClassName('luckDrawMask')[0]
-                      mask.style.display = 'none'
-                    }
-                    
-                 }
-            }).catch(err => {
-              NotificationService.dispatchNotify('网络出问题了~', {variant: 'info'})
-               })
+              prizeObj.userData.showTime = xrui.state.productData.endTime.value
+              prizeObj.userData.endTime = xrui.state.productData.endTime.value + PRIZE_SHOW_DURATION
+              console.log(prizeObj.userData.showTime)
             }
-            // 世界时间小于设置的停止时间 旋转
-            if (xrui.state.productData.endTime.value > world.elapsedSeconds) {
-              modelTargetGroup.rotation.set(0, 5 * world.elapsedSeconds, 0)
-            } else {
-              // 轮盘旋转结束 结束时间设置为0
+            if (res.data.code == 500 && res.data.message == 'fail') {
+              NotificationService.dispatchNotify('没有抽奖次数了', {variant: 'info'})
               xrui.state.productData.endTime.set(0)
               xrui.state.productData.rotateStatus.set(false)
               // 模型状态设置为 inactive 防止再次旋转
               xrui.state.mode.set('inactive')
               const mask = document.getElementsByClassName('luckDrawMask')[0]
               mask.style.display = 'none'
-              // 拿到抽奖结果
-              const resultName = xrui.state.productData.resultName.value
-              const resultId = xrui.state.productData.resultId.value
-              // 提示抽奖成功 展示奖品名字
-              // NotificationService.dispatchNotify(`恭喜你获得${resultName}！`, {variant: 'success'})
-              const luckyTips = document.getElementsByClassName('success-container')[0]
-              luckyTips.style.display = 'block'
-              document.getElementsByClassName('suc-content')[0].innerHTML = '恭喜你获得了' + resultName + '!'
-              document.getElementsByClassName('suc-img')[0].src = 'https://xr.yee.link/projects/bgy-project/assets/meidi.png'
             }
-            titleMat.opacity = MathUtils.lerp(titleMat.opacity, 0, alpha)
-          
+          }).catch(err => {
+            NotificationService.dispatchNotify('网络出问题了~', {variant: 'info'})
+            xrui.state.productData.endTime.set(0)
+            xrui.state.productData.rotateStatus.set(false)
+            // 模型状态设置为 inactive 防止再次旋转
+            xrui.state.mode.set('inactive')
+            const mask = document.getElementsByClassName('luckDrawMask')[0]
+            mask.style.display = 'none'
+          })
+        }
+        // 世界时间小于设置的停止时间 旋转
+        if (xrui.state.productData.endTime.value > world.elapsedSeconds) {
+          modelTargetGroup.rotation.set(0, 5 * world.elapsedSeconds, 0)
+        } else {
+          // 轮盘旋转结束 结束时间设置为0
+          xrui.state.productData.endTime.set(0)
+          xrui.state.productData.rotateStatus.set(false)
+          // 模型状态设置为 inactive 防止再次旋转
+          xrui.state.mode.set('inactive')
+          const mask = document.getElementsByClassName('luckDrawMask')[0]
+          mask.style.display = 'none'
+          // 拿到抽奖结果
+          const resultName = xrui.state.productData.resultName.value
+          const resultId = xrui.state.productData.resultId.value
+          console.log('梁淞清', resultName)
+          // 提示抽奖成功 展示奖品名字
+          // NotificationService.dispatchNotify(`恭喜你获得${resultName}！`, {variant: 'success'})
+          const luckyTips = document.getElementsByClassName('success-container')[0]
+          luckyTips.style.display = 'block'
+          setTimeout(() => {  //5s之后掩藏弹窗
+            luckyTips.style.display = 'none'
+          }, 5000)
+          document.getElementsByClassName('suc-content')[0].innerHTML = '恭喜你获得了' + resultName + '!'
+          // document.getElementsByClassName('suc-img')[0].src = 'https://xr.yee.link/projects/bgy-project/assets/meidi.png'
+          document.getElementsByClassName('suc-img')[0].src = resultImg
+        }
+        titleMat.opacity = MathUtils.lerp(titleMat.opacity, 0, alpha)
+
 
       } else if (xrui.state.productData.type.value === 'guide') {
         // 如果是guide类型 并且当权状态不为true 打开传送面板
@@ -411,8 +441,8 @@ export const updateInteractUI = (
         // 投票 隐藏控制按钮
         const ctlBox = document.getElementById('ctrlBox')
         const userMenuBox = document.getElementById('userMenuBox')
-        const settingContainers = document.getElementById('settingContainer')
-        settingContainers.style.display = 'none'
+        // const settingContainers = document.getElementById('settingContainer')
+        // settingContainers.style.display = 'none'
         ctlBox.style.display = 'none'
         userMenuBox.style.display = 'none'
         rootMat.opacity = MathUtils.lerp(rootMat.opacity, 1, alpha)
@@ -431,14 +461,20 @@ export const updateInteractUI = (
         const linkAlpha = Math.min((transitionElapsed - 0.3) / (duration * 3), 1)
         link.position.lerp(link.domLayout.position, linkAlpha)
         link.scale.lerp(link.domLayout.scale, linkAlpha)
-        linkMat.opacity = MathUtils.lerp(linkMat.opacity,  xrui.state.productData.type.value === 'paper' ? 0 :1 , linkAlpha)
+        linkMat.opacity = MathUtils.lerp(linkMat.opacity, xrui.state.productData.type.value === 'paper' ? 0 : 1, linkAlpha)
+        if (xrui.state.productData.type.value === 'video') {
+          // 如果是视频 播放
+          const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
+          const video = shadowRoot.getElementById('productVideo')
+          video.play()
+        }
       }
     }
-  }
+  }e
 
   // 获取guideID 如果有Id说明用户已经选择
   const guideId = localStorage.getItem('guideId')
-  if(guideId){
+  if (guideId) {
     const portalOutObj = obj3dFromUuid(guideId) as Group
     const portalOutComponent = getComponent(portalOutObj.entity, ProductComponent)
     // 修改用户当前坐标
