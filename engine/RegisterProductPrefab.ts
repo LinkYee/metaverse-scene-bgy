@@ -52,14 +52,18 @@ export default async function (world: World) {
   world.sceneLoadingRegistry.set(SCENE_COMPONENT_PRODUCT, {
     deserialize: deserializeProduct
   })
-
-  await initSystems(world, [
-    {
-      uuid: 'ethereal.ecommerce.Product',
-      systemLoader: () => import('./ProductSystem'),
-      type: SystemUpdateType.UPDATE_LATE
-    }
-  ])
+  try {
+    await initSystems(world, [
+      {
+        uuid: 'ethereal.ecommerce.Product',
+        systemLoader: () => import('./ProductSystem'),
+        type: SystemUpdateType.UPDATE_LATE
+      }
+    ])
+  } catch (e) {
+    console.log(e)
+    debugger
+  }
 
   if (Engine.instance.isEditor) {
     await fetchProducts()

@@ -22,7 +22,6 @@ type ProductUI = ReturnType<typeof createProductInteractUI>
 export const maxPoolSize = isMobile ? 1 : 2
 
 export default async function ProductSystem(world: World) {
-
   const interactActionQueue = createActionQueue(EngineActions.interactedWithObject.matches)
   const buttonClickedQueue = createActionQueue(EngineActions.buttonClicked.matches)
   const modifyPropertyActionQueue = createActionQueue(EngineActions.sceneObjectUpdate.matches)
@@ -104,7 +103,10 @@ export default async function ProductSystem(world: World) {
       // update all active UIs; wrap in try/catch becomes sometimes expected elements are not ready after we updated to React 18
       try {
         updateInteractUI(xrui, nextMode)
-      } catch(e) {}
+      } catch(e) {
+        console.log('------updateInteractUI 异常--------')
+        console.log(e)
+      }
     }
 
     // remove inactive UIs from active pool

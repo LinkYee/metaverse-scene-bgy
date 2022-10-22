@@ -56,6 +56,7 @@ import {setVisibleComponent} from "@xrengine/engine/src/scene/components/Visible
 import {ProductComponent} from '../ProductComponent'
 import {changeAvatarAnimationState} from '@xrengine/engine/src/avatar/animation/AvatarAnimationGraph'
 import {AvatarStates} from '@xrengine/engine/src/avatar/animation/Util'
+import {ImageComponent} from "@xrengine/engine/src/scene/components/ImageComponent";
 
 const MODEL_SCALE_INACTIVE = 1
 const MODEL_SCALE_ACTIVE = 1.2
@@ -203,7 +204,6 @@ export const updateInteractUI = (
   const cameraTransform = getComponent(Engine.instance.currentWorld.cameraEntity, TransformComponent)
 
   if (nextMode === 'inactive') {
-    console.log('我调用了')
     // 隐藏控制按钮
     const ctlBox = document.getElementById('ctrlBox')
     const userMenuBox = document.getElementById('userMenuBox')
@@ -211,9 +211,9 @@ export const updateInteractUI = (
     userMenuBox.style.display = 'block'
     if (xrui.state.productData.type.value === 'video') {
       // 如果是视频 暂停
-      const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
-      const video = shadowRoot.getElementById('productVideo')
-      video && video.stop()
+      // const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
+      // const video = shadowRoot.getElementById('productVideo')
+      // video && video.stop()
     }
     // if(congbaPlayer && !xrui.state.productData.congbaStatus.value){
     //   console.log('congbaPlayer.pause()')
@@ -252,23 +252,13 @@ export const updateInteractUI = (
     const userMenuBox = document.getElementById('userMenuBox')
     ctlBox.style.display = 'block'
     userMenuBox.style.display = 'block'
-    if (xrui.state.productData.type.value === 'video') {
-      // 如果是视频 暂停
-      const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
-      const video = shadowRoot.getElementById('productVideo')
-      video && video.stop()
-    }
     // 卡片类型不要全系框
-    // if (xrui.state.productData.type.value === 'card') return;
+    if (xrui.state.productData.type.value === 'card') {
+      console.log('----card---')
+    }
     if (modelTargetGroup.parent !== world.scene) {
       world.scene.attach(modelTargetGroup)
     }
-    // if(congbaPlayer && !xrui.state.productData.congbaStatus.value){
-    //   console.log('congbaPlayer.pause()')
-    //   congbaPlayer.pause()
-    //   congbaPlayer = null
-    // }
-
     const uiContainerScale = Math.max(1, cameraTransform.position.distanceTo(anchorPosition)) * 0.8
     uiContainer.position.lerp(anchorPosition, alpha)
     uiContainer.quaternion.copy(cameraTransform.rotation)
@@ -294,8 +284,12 @@ export const updateInteractUI = (
     link.position.lerp(link.domLayout.position, alpha)
     link.scale.lerp(link.domLayout.scale.multiplyScalar(0.1), alpha)
     linkMat.opacity = MathUtils.lerp(linkMat.opacity, 0, alpha)
-
   } else if (nextMode === 'interacting') {
+    // 处理大屏图片
+    const baseUrl = 'https://xr.yee.link/bygfw/vote_result_'
+    const imgObj = obj3dFromUuid('a6f5c0ff-9824-4bdc-8bc3-41a602d7dafb') as Group
+    const imageComponent = getComponent(imgObj.entity, ImageComponent)
+    imageComponent.source.set(baseUrl + new Date().getTime() + '.png')
     // 动作 先随便用一个代替
     // const entity = Engine.instance.currentWorld.localClientEntity
     // changeAvatarAnimationState(entity, AvatarStates.DANCE1)
@@ -310,12 +304,12 @@ export const updateInteractUI = (
       // 切换文案
       xrui.state.productData.description.set(curObj.word)
       // 播放语音
-      if (congbaPlayer) {
-        congbaPlayer.pause()
-        congbaPlayer = null
-      }
-      congbaPlayer = new Audio(curObj.voice)
-      congbaPlayer.play() //播放 mp3这个音频对象
+      // if (congbaPlayer) {
+      //   congbaPlayer.pause()
+      //   congbaPlayer = null
+      // }
+      // congbaPlayer = new Audio(curObj.voice)
+      // congbaPlayer.play() //播放 mp3这个音频对象
       // 修改当前下标
       xrui.state.productData.curIndex.set(curIndex + 1)
       // 设置聪吧交互状态
@@ -356,7 +350,7 @@ export const updateInteractUI = (
           }).then(res => {
             if (res.data.code == 200) {
               console.log('++++++', res.data)
-
+              NotificationService.dispatchNotify(`还有${res.data.prize_icon}次抽奖机会哦~`, {variant: 'info'})
               // 假设这里拿到的 id 和 name分别为：
               var resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
               const resultName = `${res.data.prize_name}`
@@ -462,15 +456,9 @@ export const updateInteractUI = (
         link.position.lerp(link.domLayout.position, linkAlpha)
         link.scale.lerp(link.domLayout.scale, linkAlpha)
         linkMat.opacity = MathUtils.lerp(linkMat.opacity, xrui.state.productData.type.value === 'paper' ? 0 : 1, linkAlpha)
-        if (xrui.state.productData.type.value === 'video') {
-          // 如果是视频 播放
-          const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
-          const video = shadowRoot.getElementById('productVideo')
-          video.play()
-        }
       }
     }
-  }e
+  }
 
   // 获取guideID 如果有Id说明用户已经选择
   const guideId = localStorage.getItem('guideId')
@@ -493,34 +481,32 @@ export const updateInteractUI = (
 
   // 根据拿到奖品模型
   const resultId = xrui.state.productData.resultId.value
-  const prizeObj = obj3dFromUuid(resultId) as Group
-  const modelTargetPosition = _vect.copy(anchorPosition)
-  // 如果世界时间大于奖品开始时间且小于结束时间 出现奖品
-  console.log('当前时间', world.elapsedSeconds)
-  console.log('奖品展示时间 开始', prizeObj.userData.showTime)
-  console.log('奖品展示时间 结束', prizeObj.userData.endTime)
-  if (world.elapsedSeconds > prizeObj.userData.showTime && world.elapsedSeconds < prizeObj.userData.endTime) {
-    console.log('出现奖品')
-    // 设置奖品位置为轮盘正上方
-    // setVisibleComponent(prizeObj.entity, true)
-    // 设置奖品旋转&上下浮动 位置为轮盘正上方
-    prizeObj.rotation.set(0, world.elapsedSeconds, 0)
-    prizeObj.position.setX(modelTargetPosition.x)
-    prizeObj.position.setZ(modelTargetPosition.z)
-    prizeObj.position.setY(2)
-    console.log('???')
-  } else if (world.elapsedSeconds > prizeObj.userData.endTime) {
-    console.log('隐藏奖品')
-    prizeObj.position.setY(-20)
-    // setVisibleComponent(prizeObj.entity, false)
-    // 清除奖品属性
-    delete prizeObj.userData.showTime
-    delete prizeObj.userData.endTime
-    // 清除抽奖结果
-    xrui.state.productData.resultId.set(null)
-    xrui.state.productData.resultName.set(null)
+  if(resultId){
+    const prizeObj = obj3dFromUuid(resultId) as Group
+    const modelTargetPosition = _vect.copy(anchorPosition)
+    // 如果世界时间大于奖品开始时间且小于结束时间 出现奖品
+    if (world.elapsedSeconds > prizeObj.userData.showTime && world.elapsedSeconds < prizeObj.userData.endTime) {
+      console.log('出现奖品')
+      // 设置奖品位置为轮盘正上方
+      // setVisibleComponent(prizeObj.entity, true)
+      // 设置奖品旋转&上下浮动 位置为轮盘正上方
+      prizeObj.rotation.set(0, world.elapsedSeconds, 0)
+      prizeObj.position.setX(modelTargetPosition.x)
+      prizeObj.position.setZ(modelTargetPosition.z)
+      prizeObj.position.setY(2)
+      console.log('???')
+    } else if (world.elapsedSeconds > prizeObj.userData.endTime) {
+      console.log('隐藏奖品')
+      prizeObj.position.setY(-20)
+      // setVisibleComponent(prizeObj.entity, false)
+      // 清除奖品属性
+      delete prizeObj.userData.showTime
+      delete prizeObj.userData.endTime
+      // 清除抽奖结果
+      xrui.state.productData.resultId.set(null)
+      xrui.state.productData.resultName.set(null)
+    }
   }
-
 
   const productTransform = getComponent(productEntity, TransformComponent)
   if (productTransform) {
