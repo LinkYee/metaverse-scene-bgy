@@ -122,7 +122,7 @@ export const EcommerceInteractableModalView = () => {
             {
               productComponent.type === 'paper' ?
                 <img className="descriptionImg" src={productComponent.mediaUrl} alt=""/> :
-                <video id="productVideo" poster="https://xr-resources.yee.link/Asset/videoLoading.gif" crossOrigin="anonymous" className="descriptionImg" autoPlay={false} src={productComponent.mediaUrl}/>
+                <video id="productVideo" controls="true" poster="https://xr-resources.yee.link/Asset/videoLoading.gif" crossOrigin="anonymous" className="descriptionImg" autoPlay={false} src={productComponent.mediaUrl}/>
             }
           </div>
           <div className="buttons">

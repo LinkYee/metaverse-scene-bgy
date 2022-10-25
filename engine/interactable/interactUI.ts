@@ -102,12 +102,25 @@ export function createProductInteractUI(modelEntity: Entity) {
   return ui
 }
 
+
+function getUserDevice() {
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS){
+    return 'ios'
+  } else{
+    return 'android'
+  }
+}
+
 function playVideo() {
   var allNodes = document.querySelectorAll('[id^=container-xrui-]');
   allNodes.forEach(singleNode => { 
     if(singleNode && singleNode.shadowRoot){
       let video = singleNode.shadowRoot.getElementById('productVideo');
-      video && video.play(); 
+      video && video.setAttribute('poster', video.currentSrc + "?x-oss-process=video/snapshot,t_100,f_jpg,w_640,h_360,m_fast")
+      if(getUserDevice() != 'ios'){
+        video && video.play(); 
+      }
     }
   })
 }
