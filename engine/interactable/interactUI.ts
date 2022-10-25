@@ -49,7 +49,7 @@ import {ModelComponent} from "@xrengine/engine/src/scene/components/ModelCompone
 import {addObjectToGroup, GroupComponent} from "@xrengine/engine/src/scene/components/GroupComponent";
 import {parseGLTFModel} from "@xrengine/engine/src/scene/functions/loadGLTFModel";
 import {ObjectLayers} from "@xrengine/engine/src/scene/constants/ObjectLayers";
-import {MediaComponent} from "@xrengine/engine/src/scene/components/MediaComponent";
+import {MediaComponent, MediaElementComponent} from "@xrengine/engine/src/scene/components/MediaComponent";
 import obj3dFromUuid from "@xrengine/engine/src/scene/util/obj3dFromUuid";
 import {PortalComponent} from "@xrengine/engine/src/scene/components/PortalComponent";
 import {setVisibleComponent} from "@xrengine/engine/src/scene/components/VisibleComponent";
@@ -77,6 +77,7 @@ const LUCKY_ROTATE_DURATION = 3 // 轮盘旋转持续时间
 const PRIZE_SHOW_DURATION = 10 // 奖品展示持续时间
 const PORTAL_IN_ID = 'dd1eafe4-dc87-4353-b3ae-567d4f81c032' // 传送门入口id
 const PORTAL_OUT_ID = '2d7f9f97-20a0-40e8-a504-682f650af501' // 传送门出口id
+let LAST_VIDEO_STATUS_FLIP_TIME = 0;
 const _vect = new Vector3()
 const _quat = new Quaternion()
 let congbaPlayer = null
@@ -93,20 +94,39 @@ export function createProductInteractUI(modelEntity: Entity) {
   return ui
 }
 
+function playVideo() {
+  var allNodes = document.querySelectorAll('[id^=container-xrui-]');
+  allNodes.forEach(singleNode => { 
+    if(singleNode && singleNode.shadowRoot){
+      let video = singleNode.shadowRoot.getElementById('productVideo');
+      video && video.play(); 
+    }
+  })
+}
 
-// Axios({
-//       url: 'https://c4c6-115-183-27-242.jp.ngrok.io/checkSMSCode',
-//       method: 'post',
-//       data: `phoneNumber=${phoneNumber}&checkSMSCode=${code}`,
-//       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-//     }
-//     ).then(res => {
-//       if (res.data.code == 200) {
+function pauseVideo() {
+  var allNodes = document.querySelectorAll('[id^=container-xrui-]');
+  allNodes.forEach(singleNode => { 
+    if(singleNode && singleNode.shadowRoot){
+      let video = singleNode.shadowRoot.getElementById('productVideo');
+      video && video.pause(); 
+    }
+  })
+}
 
-//       }
-//     }).catch(err => {
-//       console.log(err)
-//     })
+function pauseBGM() {
+  const mediaQuery = defineQuery([MediaComponent, MediaElementComponent])
+  for (const entity of mediaQuery()) {
+    const media = getComponent(entity, MediaComponent)
+    const mediaEle = getComponent(entity, MediaElementComponent)?.element
+    // console.log(media)
+    // debugger
+    if (media.playing.value) {
+      media.playing.set(false)
+    }
+    mediaEle.pause()
+  }
+}
 
 export const updateInteractUI = (
   xrui: ReturnType<typeof createProductInteractUI>,
@@ -207,18 +227,23 @@ export const updateInteractUI = (
     // 隐藏控制按钮
     const ctlBox = document.getElementById('ctrlBox')
     const userMenuBox = document.getElementById('userMenuBox')
-    ctlBox.style.display = 'block'
+    if(ctlBox){
+      ctlBox.style.display = 'block'
+    }
+   
     userMenuBox.style.display = 'block'
     if (xrui.state.productData.type.value === 'video') {
       // 如果是视频 暂停
-      // const shadowRoot = document.getElementById('container-xrui-EcommerceInteractableModalView').shadowRoot
-      // const video = shadowRoot.getElementById('productVideo')
-      // video && video.stop()
+      pauseVideo()
     }
-    // if(congbaPlayer && !xrui.state.productData.congbaStatus.value){
-    //   console.log('congbaPlayer.pause()')
-    //   congbaPlayer.pause()
-    //   congbaPlayer = null
+    // 聪吧非聚焦状态闭嘴
+    // if (xrui.state.productData.type.value === 'congba') {
+    //   if(congbaPlayer){
+    //     console.log('congbaPlayer.pause()')
+    //     congbaPlayer.pause()
+    //     congbaPlayer = null
+    //     xrui.state.productData.congbaStatus.set(false)
+    //   }
     // }
     const uiContainerScale = Math.max(1, cameraTransform.position.distanceTo(anchorPosition)) * 0.8
     uiContainer.position.lerp(anchorPosition, alpha)
@@ -252,13 +277,26 @@ export const updateInteractUI = (
     const userMenuBox = document.getElementById('userMenuBox')
     ctlBox.style.display = 'block'
     userMenuBox.style.display = 'block'
-    // 卡片类型不要全系框
-    if (xrui.state.productData.type.value === 'card') {
-      console.log('----card---')
+    if (xrui.state.productData.type.value === 'video') {
+      // 如果是视频 暂停
+      pauseVideo() 
     }
+    // 卡片类型不要全系框
+    // if (xrui.state.productData.type.value === 'card') return;
     if (modelTargetGroup.parent !== world.scene) {
       world.scene.attach(modelTargetGroup)
     }
+    // 聪吧非聚焦状态闭嘴
+    // if (xrui.state.productData.type.value === 'congba') {
+    //   if(congbaPlayer){
+    //     console.log('congbaPlayer.pause()')
+    //     congbaPlayer.pause()
+    //     congbaPlayer = null
+    //     xrui.state.productData.congbaStatus.set(false)
+    //   }
+    // }
+
+
     const uiContainerScale = Math.max(1, cameraTransform.position.distanceTo(anchorPosition)) * 0.8
     uiContainer.position.lerp(anchorPosition, alpha)
     uiContainer.quaternion.copy(cameraTransform.rotation)
@@ -285,11 +323,6 @@ export const updateInteractUI = (
     link.scale.lerp(link.domLayout.scale.multiplyScalar(0.1), alpha)
     linkMat.opacity = MathUtils.lerp(linkMat.opacity, 0, alpha)
   } else if (nextMode === 'interacting') {
-    // 处理大屏图片
-    const baseUrl = 'https://xr.yee.link/bygfw/vote_result_'
-    const imgObj = obj3dFromUuid('a6f5c0ff-9824-4bdc-8bc3-41a602d7dafb') as Group
-    const imageComponent = getComponent(imgObj.entity, ImageComponent)
-    imageComponent.source.set(baseUrl + new Date().getTime() + '.png')
     // 动作 先随便用一个代替
     // const entity = Engine.instance.currentWorld.localClientEntity
     // changeAvatarAnimationState(entity, AvatarStates.DANCE1)
@@ -304,12 +337,13 @@ export const updateInteractUI = (
       // 切换文案
       xrui.state.productData.description.set(curObj.word)
       // 播放语音
-      // if (congbaPlayer) {
-      //   congbaPlayer.pause()
-      //   congbaPlayer = null
-      // }
-      // congbaPlayer = new Audio(curObj.voice)
-      // congbaPlayer.play() //播放 mp3这个音频对象
+      if (congbaPlayer) {
+        congbaPlayer.pause()
+        congbaPlayer = null
+      }
+      pauseBGM();
+      congbaPlayer = new Audio(curObj.voice)
+      congbaPlayer.play() //播放 mp3这个音频对象
       // 修改当前下标
       xrui.state.productData.curIndex.set(curIndex + 1)
       // 设置聪吧交互状态
@@ -330,6 +364,7 @@ export const updateInteractUI = (
       uiContainer.scale.lerp(_vect.setScalar(uiContainerScale), alpha)
       // 如果是card类型 旋转
       if (xrui.state.productData.type.value === 'card') {
+        console.log('我开始卡片抽奖了')
         const modal = getComponent(productEntity, ModelComponent)
         // todo1 判断抽奖次数 如果没有次数 NotificationService.dispatchNotify 一个提示 然后 return
         // 如果当前旋转状态false 设置结束时间 并且开始旋转
@@ -350,11 +385,12 @@ export const updateInteractUI = (
           }).then(res => {
             if (res.data.code == 200) {
               console.log('++++++', res.data)
-              NotificationService.dispatchNotify(`还有${res.data.prize_icon}次抽奖机会哦~`, {variant: 'info'})
+              NotificationService.dispatchNotify(`还有${res.data.data.s}次抽奖机会哦~`, {variant: 'info'})
               // 假设这里拿到的 id 和 name分别为：
+              console.log('抽奖结果---',res.data)
               var resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
-              const resultName = `${res.data.prize_name}`
-              resultImg = res.data.prize_icon
+              const resultName = `${res.data.data.prize}`
+              resultImg = res.data.data.prizeIcon
               // const resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
               // const resultName = '熬夜写代码特等奖'
               // 记录抽奖结果
@@ -369,17 +405,23 @@ export const updateInteractUI = (
               prizeObj.userData.endTime = xrui.state.productData.endTime.value + PRIZE_SHOW_DURATION
               console.log(prizeObj.userData.showTime)
             }
-            if (res.data.code == 500 && res.data.message == 'fail') {
-              NotificationService.dispatchNotify('没有抽奖次数了', {variant: 'info'})
+            if (res.data.code == 501) {
+              NotificationService.dispatchNotify(res.data.message, {variant: 'info'})
               xrui.state.productData.endTime.set(0)
               xrui.state.productData.rotateStatus.set(false)
               // 模型状态设置为 inactive 防止再次旋转
               xrui.state.mode.set('inactive')
               const mask = document.getElementsByClassName('luckDrawMask')[0]
               mask.style.display = 'none'
+            }else{
+              NotificationService.dispatchNotify(res.data.message, {variant: 'info'})
+              xrui.state.productData.endTime.set(0)
+              xrui.state.productData.rotateStatus.set(false)
+              const mask = document.getElementsByClassName('luckDrawMask')[0]
+              mask.style.display = 'none' 
             }
           }).catch(err => {
-            NotificationService.dispatchNotify('网络出问题了~', {variant: 'info'})
+            NotificationService.dispatchNotify(res.data.message, {variant: 'info'})
             xrui.state.productData.endTime.set(0)
             xrui.state.productData.rotateStatus.set(false)
             // 模型状态设置为 inactive 防止再次旋转
@@ -402,7 +444,6 @@ export const updateInteractUI = (
           // 拿到抽奖结果
           const resultName = xrui.state.productData.resultName.value
           const resultId = xrui.state.productData.resultId.value
-          console.log('梁淞清', resultName)
           // 提示抽奖成功 展示奖品名字
           // NotificationService.dispatchNotify(`恭喜你获得${resultName}！`, {variant: 'success'})
           const luckyTips = document.getElementsByClassName('success-container')[0]
@@ -410,6 +451,7 @@ export const updateInteractUI = (
           setTimeout(() => {  //5s之后掩藏弹窗
             luckyTips.style.display = 'none'
           }, 5000)
+          console.log('传递的抽奖信息',resultName,resultImg)
           document.getElementsByClassName('suc-content')[0].innerHTML = '恭喜你获得了' + resultName + '!'
           // document.getElementsByClassName('suc-img')[0].src = 'https://xr.yee.link/projects/bgy-project/assets/meidi.png'
           document.getElementsByClassName('suc-img')[0].src = resultImg
@@ -418,27 +460,26 @@ export const updateInteractUI = (
 
 
       } else if (xrui.state.productData.type.value === 'guide') {
-        // 如果是guide类型 并且当权状态不为true 打开传送面板
-        if (!xrui.state.productData.guideStatus.value) {
-          NotificationService.dispatchNotify('打开传送面板事件', {variant: 'info'})
+        // 如果是guide类型 并且当权状态不为true 打开传送面板   
+        // if (!xrui.state.productData.guideStatus.value) {
+          NotificationService.dispatchNotify('打开传送面板', {variant: 'info'})
           xrui.state.productData.guideStatus.set(true)
           xrui.state.mode.set('active')
           // 打开一个选择面板
-          const bgyDom = document.getElementById('bgyDom')
+          const defaultDom = document.getElementById('default')
           const guide = document.getElementsByClassName('guide-container')[0]
-          bgyDom.style.pointerEvents = 'auto'
+          defaultDom.style.pointerEvents = 'auto'
           guide.style.display = 'flex'
-        }
-
+        // }
 
       } else {
         // 投票 隐藏控制按钮
-        const ctlBox = document.getElementById('ctrlBox')
-        const userMenuBox = document.getElementById('userMenuBox')
-        // const settingContainers = document.getElementById('settingContainer')
-        // settingContainers.style.display = 'none'
-        ctlBox.style.display = 'none'
-        userMenuBox.style.display = 'none'
+        // const ctlBox = document.getElementById('ctrlBox')
+        // const userMenuBox = document.getElementById('userMenuBox')
+        // // const settingContainers = document.getElementById('settingContainer')
+        // // settingContainers.style.display = 'none'
+        // ctlBox.style.display = 'none'
+        // userMenuBox.style.display = 'none'
         rootMat.opacity = MathUtils.lerp(rootMat.opacity, 1, alpha)
         const mpp = 1 / xrui.container.manager.pixelsPerMeter
         title.position.lerp(title.domLayout.position, alpha)
@@ -458,13 +499,26 @@ export const updateInteractUI = (
         linkMat.opacity = MathUtils.lerp(linkMat.opacity, xrui.state.productData.type.value === 'paper' ? 0 : 1, linkAlpha)
       }
     }
+
+    // 静音部分处理
+    if(xrui.state.productData.type.value === 'video' || xrui.state.productData.type.value === 'congba'){
+      // 手动播放视频
+      if(xrui.state.productData.type.value === 'video'){
+        playVideo()
+      }
+      //背景音乐静音
+      pauseBGM() 
+    }
   }
 
   // 获取guideID 如果有Id说明用户已经选择
   const guideId = localStorage.getItem('guideId')
   if (guideId) {
     const portalOutObj = obj3dFromUuid(guideId) as Group
+    console.log('传送',portalOutObj)
     const portalOutComponent = getComponent(portalOutObj.entity, ProductComponent)
+    console.log('传送2',portalOutComponent)
+
     // 修改用户当前坐标
     const avatarTransform = getComponent(world.localClientEntity, TransformComponent)
     console.log(avatarTransform)
