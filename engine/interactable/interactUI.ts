@@ -81,8 +81,16 @@ let LAST_VIDEO_STATUS_FLIP_TIME = 0;
 const _vect = new Vector3()
 const _quat = new Quaternion()
 let congbaPlayer = null
+let guideTimer;
+let guideTimerCounter = 0;
 let _uiCount = 0
 var resultImg = ''
+
+const soundEffect = new Audio();
+soundEffect.autoplay = true;
+setTimeout(function(){
+  soundEffect.src = "data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+}, 15000)
 
 export function createProductInteractUI(modelEntity: Entity) {
   _uiCount++
@@ -225,13 +233,13 @@ export const updateInteractUI = (
 
   if (nextMode === 'inactive') {
     // 隐藏控制按钮
-    const ctlBox = document.getElementById('ctrlBox')
-    const userMenuBox = document.getElementById('userMenuBox')
-    if(ctlBox){
-      ctlBox.style.display = 'block'
-    }
+    // const ctlBox = document.getElementById('ctrlBox')
+    // const userMenuBox = document.getElementById('userMenuBox')
+    // if(ctlBox){
+    //   ctlBox.style.display = 'block'
+    // }
    
-    userMenuBox.style.display = 'block'
+    // userMenuBox.style.display = 'block'
     if (xrui.state.productData.type.value === 'video') {
       // 如果是视频 暂停
       pauseVideo()
@@ -273,10 +281,10 @@ export const updateInteractUI = (
     link.scale.lerp(link.domLayout.scale.multiplyScalar(0.1), alpha)
     linkMat.opacity = MathUtils.lerp(linkMat.opacity, 0, alpha)
   } else if (nextMode === 'active') {
-    const ctlBox = document.getElementById('ctrlBox')
-    const userMenuBox = document.getElementById('userMenuBox')
-    ctlBox.style.display = 'block'
-    userMenuBox.style.display = 'block'
+    // const ctlBox = document.getElementById('ctrlBox')
+    // const userMenuBox = document.getElementById('userMenuBox')
+    // ctlBox.style.display = 'block'
+    // userMenuBox.style.display = 'block'
     if (xrui.state.productData.type.value === 'video') {
       // 如果是视频 暂停
       pauseVideo() 
@@ -337,13 +345,12 @@ export const updateInteractUI = (
       // 切换文案
       xrui.state.productData.description.set(curObj.word)
       // 播放语音
-      if (congbaPlayer) {
-        congbaPlayer.pause()
-        congbaPlayer = null
+      if (soundEffect) {
+        soundEffect.pause()
       }
       pauseBGM();
-      congbaPlayer = new Audio(curObj.voice)
-      congbaPlayer.play() //播放 mp3这个音频对象
+      soundEffect.src = curObj.voice
+      soundEffect.play() //播放 mp3这个音频对象
       // 修改当前下标
       xrui.state.productData.curIndex.set(curIndex + 1)
       // 设置聪吧交互状态
@@ -471,6 +478,30 @@ export const updateInteractUI = (
           defaultDom.style.pointerEvents = 'auto'
           guide.style.display = 'flex'
         // }
+          // 获取guideID 如果有Id说明用户已经选择
+          guideTimer = setInterval(function(){
+            let guideId = localStorage.getItem('guideId')
+            if (guideId) {
+              let portalOutObj = obj3dFromUuid(guideId) as Group
+              console.log('传送',portalOutObj)
+              let portalOutComponent = getComponent(portalOutObj.entity, ProductComponent)
+              console.log('传送2',portalOutComponent)
+
+              // 修改用户当前坐标
+              const avatarTransform = getComponent(world.localClientEntity, TransformComponent)
+              console.log(avatarTransform)
+              avatarTransform.position.setX(portalOutComponent.portalPosition.x)
+              avatarTransform.position.setY(portalOutComponent.portalPosition.y)
+              avatarTransform.position.setZ(portalOutComponent.portalPosition.z)
+              avatarTransform.rotation.set(portalOutComponent.portalRotation.x, portalOutComponent.portalRotation.y, portalOutComponent.portalRotation.z)
+              localStorage.removeItem('guideId')
+              setTimeout(() => {
+                // 将面板状态设置为false
+                xrui.state.productData.guideStatus.set(false)
+                clearInterval(guideTimer)
+              }, 200)
+            }
+        }, 500)
 
       } else {
         // 投票 隐藏控制按钮
@@ -511,27 +542,7 @@ export const updateInteractUI = (
     }
   }
 
-  // 获取guideID 如果有Id说明用户已经选择
-  const guideId = localStorage.getItem('guideId')
-  if (guideId) {
-    const portalOutObj = obj3dFromUuid(guideId) as Group
-    console.log('传送',portalOutObj)
-    const portalOutComponent = getComponent(portalOutObj.entity, ProductComponent)
-    console.log('传送2',portalOutComponent)
-
-    // 修改用户当前坐标
-    const avatarTransform = getComponent(world.localClientEntity, TransformComponent)
-    console.log(avatarTransform)
-    avatarTransform.position.setX(portalOutComponent.portalPosition.x)
-    avatarTransform.position.setY(portalOutComponent.portalPosition.y)
-    avatarTransform.position.setZ(portalOutComponent.portalPosition.z)
-    avatarTransform.rotation.set(portalOutComponent.portalRotation.x, portalOutComponent.portalRotation.y, portalOutComponent.portalRotation.z)
-    localStorage.removeItem('guideId')
-    setTimeout(() => {
-      // 将面板状态设置为false
-      xrui.state.productData.guideStatus.set(false)
-    }, 200)
-  }
+  
 
   // 根据拿到奖品模型
   const resultId = xrui.state.productData.resultId.value
