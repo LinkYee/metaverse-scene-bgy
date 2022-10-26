@@ -460,7 +460,7 @@ export const updateInteractUI = (
               mask.style.display = 'none' 
             }
           }).catch(err => {
-            NotificationService.dispatchNotify(res.data.message, {variant: 'info'})
+            NotificationService.dispatchNotify(err.message, {variant: 'error'})
             xrui.state.productData.endTime.set(0)
             xrui.state.productData.rotateStatus.set(false)
             // 模型状态设置为 inactive 防止再次旋转
