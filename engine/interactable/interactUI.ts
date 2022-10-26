@@ -85,12 +85,20 @@ let guideTimer;
 let guideTimerCounter = 0;
 let _uiCount = 0
 var resultImg = ''
+let bgmPaused = false
 
 const soundEffect = new Audio();
-soundEffect.autoplay = true;
-setTimeout(function(){
-  soundEffect.src = "data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
-}, 15000)
+soundEffect.autoplay = false;
+let actionCoolingTime = new Date().getTime()
+function coolingTimeCheck(minTime){
+  var timeDiff = new Date().getTime() - actionCoolingTime
+  minTime = minTime ? minTime : 500
+  if(timeDiff < minTime){
+    return false
+  }
+  actionCoolingTime = new Date().getTime()
+  return true
+}
 
 export function createProductInteractUI(modelEntity: Entity) {
   _uiCount++
@@ -113,6 +121,9 @@ function getUserDevice() {
 }
 
 function playVideo() {
+  if(!coolingTimeCheck(500)){
+    return
+  }
   var allNodes = document.querySelectorAll('[id^=container-xrui-]');
   allNodes.forEach(singleNode => { 
     if(singleNode && singleNode.shadowRoot){
@@ -126,6 +137,9 @@ function playVideo() {
 }
 
 function pauseVideo() {
+  if(!coolingTimeCheck(500)){
+    return
+  }
   var allNodes = document.querySelectorAll('[id^=container-xrui-]');
   allNodes.forEach(singleNode => { 
     if(singleNode && singleNode.shadowRoot){
@@ -136,6 +150,9 @@ function pauseVideo() {
 }
 
 function pauseBGM() {
+  if(!coolingTimeCheck(1000)){
+    return
+  }
   const mediaQuery = defineQuery([MediaComponent, MediaElementComponent])
   for (const entity of mediaQuery()) {
     const media = getComponent(entity, MediaComponent)
@@ -284,7 +301,8 @@ export const updateInteractUI = (
     title.scale.lerp(title.domLayout.scale, alpha)
     titleMat.opacity = MathUtils.lerp(titleMat.opacity, 0, alpha)
     interactHint.position.copy(title.position)
-    interactHint.position.y -= 0.1
+    // 全息框位置
+    interactHint.position.y += 0.3
     interactHintMat.opacity = MathUtils.lerp(interactHintMat.opacity, 0, alpha)
 
     description.position.lerp(description.domLayout.position, alpha)
@@ -327,7 +345,7 @@ export const updateInteractUI = (
     title.scale.lerp(title.domLayout.scale, alpha)
     titleMat.opacity = MathUtils.lerp(titleMat.opacity, 1, alpha)
     interactHint.position.copy(title.position)
-    interactHint.position.y -= 0.15
+    interactHint.position.y += 0.3
     interactHintMat.opacity = MathUtils.lerp(interactHintMat.opacity, 1, alpha)
     const modelTargetPosition = _vect.copy(anchorPosition)
     modelTargetPosition.y += MODEL_ELEVATION_ACTIVE + Math.sin(world.elapsedSeconds) * 0.05
@@ -358,12 +376,13 @@ export const updateInteractUI = (
       // 切换文案
       xrui.state.productData.description.set(curObj.word)
       // 播放语音
-      if (soundEffect) {
+      if (soundEffect && !soundEffect.paused) {
         soundEffect.pause()
       }
-      pauseBGM();
-      soundEffect.src = curObj.voice
-      soundEffect.play() //播放 mp3这个音频对象
+      if(soundEffect.currentSrc != curObj.voice) {
+        soundEffect.src = curObj.voice
+        soundEffect.play() //播放 mp3这个音频对象
+      }
       // 修改当前下标
       xrui.state.productData.curIndex.set(curIndex + 1)
       // 设置聪吧交互状态
@@ -399,7 +418,7 @@ export const updateInteractUI = (
           // todo2 这里调用接口将返回的奖品id放到轮盘的 resultId字段 奖品会自动出现在轮盘上方
           const userID = localStorage.getItem('API_LOGIN_ID')
           Axios({
-            url: 'https://xr.yee.link/bgy-api/prize/get',
+            url: 'https://biz-api.xr-bgy-prd.yee.link/prize/get',
             method: 'post',
             data: `user_id=${userID}`,
           }).then(res => {
@@ -492,29 +511,6 @@ export const updateInteractUI = (
           guide.style.display = 'flex'
         // }
           // 获取guideID 如果有Id说明用户已经选择
-          guideTimer = setInterval(function(){
-            let guideId = localStorage.getItem('guideId')
-            if (guideId) {
-              let portalOutObj = obj3dFromUuid(guideId) as Group
-              console.log('传送',portalOutObj)
-              let portalOutComponent = getComponent(portalOutObj.entity, ProductComponent)
-              console.log('传送2',portalOutComponent)
-
-              // 修改用户当前坐标
-              const avatarTransform = getComponent(world.localClientEntity, TransformComponent)
-              console.log(avatarTransform)
-              avatarTransform.position.setX(portalOutComponent.portalPosition.x)
-              avatarTransform.position.setY(portalOutComponent.portalPosition.y)
-              avatarTransform.position.setZ(portalOutComponent.portalPosition.z)
-              avatarTransform.rotation.set(portalOutComponent.portalRotation.x, portalOutComponent.portalRotation.y, portalOutComponent.portalRotation.z)
-              localStorage.removeItem('guideId')
-              setTimeout(() => {
-                // 将面板状态设置为false
-                xrui.state.productData.guideStatus.set(false)
-                clearInterval(guideTimer)
-              }, 200)
-            }
-        }, 500)
 
       } else {
         // 投票 隐藏控制按钮
@@ -550,12 +546,36 @@ export const updateInteractUI = (
       if(xrui.state.productData.type.value === 'video'){
         playVideo()
       }
-      //背景音乐静音
-      pauseBGM() 
     }
   }
 
-  
+  // 获取guideID 如果有Id说明用户已经选择
+  const guideId = localStorage.getItem('guideId')
+  if (guideId) {
+    try{
+      localStorage.removeItem('guideId')
+      console.log('有传送ID', guideId)
+      const portalOutObj = obj3dFromUuid(guideId) as Group
+      console.log('传送',portalOutObj)
+      const portalOutComponent = getComponent(portalOutObj.entity, ProductComponent)
+      console.log('传送2',portalOutComponent)
+      // 修改用户当前坐标
+      const avatarTransform = getComponent(world.localClientEntity, TransformComponent)
+      console.log(avatarTransform)
+      avatarTransform.position.setX(portalOutObj.position.x)
+      avatarTransform.position.setY(portalOutObj.position.y)
+      avatarTransform.position.setZ(portalOutObj.position.z)
+      avatarTransform.rotation.set(portalOutObj.rotation.x, portalOutObj.rotation.y, portalOutObj.rotation.z)
+      setTimeout(() => {
+        // 将面板状态设置为false
+        xrui.state.productData.guideStatus.set(false)
+      }, 200)
+    }catch{
+      localStorage.removeItem('guideId') 
+      console.log('传送失败')
+    }
+  }
+ 
 
   // 根据拿到奖品模型
   const resultId = xrui.state.productData.resultId.value

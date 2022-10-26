@@ -30,19 +30,19 @@ export const CartServiceReceptor = (action) => {
 }
 export const CartService = {
   createCart: async () => {
-    const response = await API.instance.client.service('shopify-cart').create({})
-    const cart = response.data.cartCreate.cart as CartInterface
-    dispatchAction(CartActions.createCart({ cart }))
+    // const response = await API.instance.client.service('shopify-cart').create({})
+    // const cart = response.data.cartCreate.cart as CartInterface
+    // dispatchAction(CartActions.createCart({ cart }))
   },
   addItemToCart: async (id: string) => {
-    dispatchAction(CartActions.addingToCart({ id }))
-    const cartId = accessCartState().cart.id.value
-    const response = (await API.instance.client.service('shopify-cart').patch(id, { operation: 'add', cartId })).data
-      .cartLinesAdd.cart as CartProductAddedInterface
-    const items = response.lines.edges.map((edge) => edge.node)
-    const addedItem = items.find(item => item.merchandise.id === id)!
-    dispatchAction(CartActions.addedToCart({ items: [addedItem] }))
-    NotificationService.dispatchNotify('Added to cart', { variant: 'success' })
+    // dispatchAction(CartActions.addingToCart({ id }))
+    // const cartId = accessCartState().cart.id.value
+    // const response = (await API.instance.client.service('shopify-cart').patch(id, { operation: 'add', cartId })).data
+    //   .cartLinesAdd.cart as CartProductAddedInterface
+    // const items = response.lines.edges.map((edge) => edge.node)
+    // const addedItem = items.find(item => item.merchandise.id === id)!
+    // dispatchAction(CartActions.addedToCart({ items: [addedItem] }))
+    // NotificationService.dispatchNotify('Added to cart', { variant: 'success' })
   }
 }
 
