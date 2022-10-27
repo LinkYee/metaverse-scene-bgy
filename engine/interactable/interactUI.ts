@@ -453,6 +453,7 @@ export const updateInteractUI = (
               const mask = document.getElementsByClassName('luckDrawMask')[0]
               mask.style.display = 'none'
             }else{
+              xrui.state.mode.set('inactive')
               NotificationService.dispatchNotify(res.data.message, {variant: 'info'})
               xrui.state.productData.endTime.set(0)
               xrui.state.productData.rotateStatus.set(false)

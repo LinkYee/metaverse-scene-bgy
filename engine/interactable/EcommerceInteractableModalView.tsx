@@ -266,7 +266,7 @@ export const EcommerceInteractableModalView = () => {
 
         .description {
           font-size: 0.9rem;
-          margin-bottom: 20px;
+          margin: 0 auto 20px;
           display: flex;
           align-items: center;
           flex-direction: row;
