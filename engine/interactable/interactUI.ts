@@ -86,6 +86,7 @@ let guideTimerCounter = 0;
 let _uiCount = 0
 var resultImg = ''
 let bgmPaused = false
+let voteState = 0 // 0 未抽奖 1 抽奖中 2 抽奖结束 3 抽奖失败 4 无抽奖次数
 
 const soundEffect = new Audio();
 soundEffect.autoplay = false;
@@ -406,8 +407,12 @@ export const updateInteractUI = (
         console.log('我开始卡片抽奖了')
         const modal = getComponent(productEntity, ModelComponent)
         // todo1 判断抽奖次数 如果没有次数 NotificationService.dispatchNotify 一个提示 然后 return
+        if(voteState != 0){
+          console.log('正在抽奖中,请勿重复点击...当前抽奖状态：', voteState)
+        }
         // 如果当前旋转状态false 设置结束时间 并且开始旋转
         if (!xrui.state.productData.rotateStatus.value) {
+          voteState = 1
           // 设置为3秒后 旋转三秒停止
           xrui.state.productData.endTime.set(world.elapsedSeconds + LUCKY_ROTATE_DURATION)
           xrui.state.productData.rotateStatus.set(true)
@@ -422,14 +427,17 @@ export const updateInteractUI = (
             method: 'post',
             data: `user_id=${userID}`,
           }).then(res => {
+            // 抽奖结束
+            voteState = 0
             if (res.data.code == 200) {
               console.log('++++++', res.data)
-              NotificationService.dispatchNotify(`还有${res.data.data.s}次抽奖机会哦~`, {variant: 'info'})
+              NotificationService.dispatchNotify(`还有${res.data.data.prizeRestTime}次抽奖机会哦~`, {variant: 'info'})
               // 假设这里拿到的 id 和 name分别为：
               console.log('抽奖结果---',res.data)
               var resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
               const resultName = `${res.data.data.prize}`
               resultImg = res.data.data.prizeIcon
+              console.log('image',resultImg)
               // const resultId = '228f0c4d-2099-4265-82ab-5689c7adcc0f'
               // const resultName = '熬夜写代码特等奖'
               // 记录抽奖结果
@@ -443,6 +451,22 @@ export const updateInteractUI = (
               prizeObj.userData.showTime = xrui.state.productData.endTime.value
               prizeObj.userData.endTime = xrui.state.productData.endTime.value + PRIZE_SHOW_DURATION
               console.log(prizeObj.userData.showTime)
+              xrui.state.mode.set('inactive')
+              const mask = document.getElementsByClassName('luckDrawMask')[0]
+              mask.style.display = 'none'
+              const luckyTips = document.getElementsByClassName('success-container')[0]
+              luckyTips.style.display = 'block'
+              luckyTips.style.pointerEvents = 'auto'
+              console.log('传递的抽奖信息',resultName,resultImg)
+              document.getElementsByClassName('suc-content')[0].innerHTML = '恭喜你获得了' + resultName + '!'
+              document.getElementsByClassName('suc-img')[0].src = resultImg
+              if(res.data.data.isSurvey == 0){
+                setTimeout(()=>{
+                document.getElementById('questionnaire').style.display = 'flex'
+                document.getElementById('questionnaire').style.pointerEvents = 'auto'
+              },3000)
+              }
+              
             }
             if (res.data.code == 501) {
               NotificationService.dispatchNotify(res.data.message, {variant: 'info'})
@@ -453,7 +477,7 @@ export const updateInteractUI = (
               const mask = document.getElementsByClassName('luckDrawMask')[0]
               mask.style.display = 'none'
             }else{
-              xrui.state.mode.set('inactive')
+			  xrui.state.mode.set('inactive')
               NotificationService.dispatchNotify(res.data.message, {variant: 'info'})
               xrui.state.productData.endTime.set(0)
               xrui.state.productData.rotateStatus.set(false)
@@ -461,6 +485,8 @@ export const updateInteractUI = (
               mask.style.display = 'none' 
             }
           }).catch(err => {
+            // 抽奖结束
+            voteState = 0
             NotificationService.dispatchNotify(err.message, {variant: 'error'})
             xrui.state.productData.endTime.set(0)
             xrui.state.productData.rotateStatus.set(false)
@@ -479,25 +505,23 @@ export const updateInteractUI = (
           xrui.state.productData.rotateStatus.set(false)
           // 模型状态设置为 inactive 防止再次旋转
           xrui.state.mode.set('inactive')
-          const mask = document.getElementsByClassName('luckDrawMask')[0]
-          mask.style.display = 'none'
-          // 拿到抽奖结果
-          const resultName = xrui.state.productData.resultName.value
-          const resultId = xrui.state.productData.resultId.value
-          // 提示抽奖成功 展示奖品名字
-          // NotificationService.dispatchNotify(`恭喜你获得${resultName}！`, {variant: 'success'})
-          const luckyTips = document.getElementsByClassName('success-container')[0]
-          luckyTips.style.display = 'block'
-          setTimeout(() => {  //5s之后掩藏弹窗
-            luckyTips.style.display = 'none'
-          }, 5000)
-          console.log('传递的抽奖信息',resultName,resultImg)
-          document.getElementsByClassName('suc-content')[0].innerHTML = '恭喜你获得了' + resultName + '!'
-          // document.getElementsByClassName('suc-img')[0].src = 'https://xr.yee.link/projects/bgy-project/assets/meidi.png'
-          document.getElementsByClassName('suc-img')[0].src = resultImg
+          // const mask = document.getElementsByClassName('luckDrawMask')[0]
+          // mask.style.display = 'none'
+          // // 拿到抽奖结果
+          // const resultName = xrui.state.productData.resultName.value
+          // const resultId = xrui.state.productData.resultId.value
+          // // 提示抽奖成功 展示奖品名字
+          // // NotificationService.dispatchNotify(`恭喜你获得${resultName}！`, {variant: 'success'})
+          // const luckyTips = document.getElementsByClassName('success-container')[0]
+          // luckyTips.style.display = 'block'
+          // console.log('传递的抽奖信息',resultName,resultImg)
+          // document.getElementsByClassName('suc-content')[0].innerHTML = '恭喜你获得了' + resultName + '!'
+          // // document.getElementsByClassName('suc-img')[0].src = 'https://xr.yee.link/projects/bgy-project/assets/meidi.png'
+          // document.getElementsByClassName('suc-img')[0].src = resultImg
         }
         titleMat.opacity = MathUtils.lerp(titleMat.opacity, 0, alpha)
-
+         // 抽奖结束
+         voteState = 0
 
       } else if (xrui.state.productData.type.value === 'guide') {
         // 如果是guide类型 并且当权状态不为true 打开传送面板   
